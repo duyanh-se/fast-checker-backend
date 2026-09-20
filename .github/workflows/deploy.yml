@@ -25,3 +25,7 @@ jobs:
             git reset --hard origin/main
             test -f .env
             docker compose up -d --build --remove-orphans
+            cp deploy/nginx.fact-checker.conf /etc/nginx/sites-available/fact-checker.conf
+            ln -sfn /etc/nginx/sites-available/fact-checker.conf /etc/nginx/sites-enabled/fact-checker.conf
+            nginx -t
+            systemctl reload nginx
