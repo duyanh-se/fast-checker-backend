@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionStatus {
+  LOBBY
+  ACTIVE
+  ENDED
+}
+
+enum ChallengeType {
+  FIND_FAKE
+  EVIDENCE_HUNT
+  TIMELINE
+  CAUSE_EFFECT
+  CONCLUSION
+}
+
+model GameSession {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  adminToken    String
+  title         String
+  status        SessionStatus @default(LOBBY)
+  currentOrder  Int           @default(1)
+  createdAt     DateTime      @default(now())
+  startedAt     DateTime?
+  endedAt       DateTime?
+  players       PlayerSession[]
+  @@index([status])
+}
+
+model PlayerSession {
+  id            String        @id @default(cuid())
+  nickname      String
+  token         String        @unique
+  sessionId     String
+  session       GameSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  totalScore    Int           @default(0)
+  truthMeter    Int           @default(50)
+  currentOrder  Int           @default(1)
+  correctCount  Int           @default(0)
+  criteriaHit   Int           @default(0)
+  criteriaTotal Int           @default(0)
+  combo         Int           @default(0)
+  bestCombo     Int           @default(0)
+  totalSeconds  Int           @default(0)
+  completed     Boolean       @default(false)
+  joinedAt      DateTime      @default(now())
+  attempts      ChallengeAttempt[]
+  @@unique([sessionId, nickname])
+  @@index([sessionId, totalScore])
+}
+
+model Challenge {
+  id            String        @id @default(cuid())
+  order         Int           @unique
+  type          ChallengeType
+  title         String
+  instructions  String
+  payload       Json
+  solution      Json
+  timeLimit     Int
+  baseScore     Int
+  active        Boolean       @default(true)
+  attempts      ChallengeAttempt[]
+}
+
+model ChallengeAttempt {
+  id            String        @id @default(cuid())
+  playerId      String
+  player        PlayerSession @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  challengeId   String
+  challenge     Challenge     @relation(fields: [challengeId], references: [id])
+  startedAt     DateTime      @default(now())
+  submittedAt   DateTime?
+  answer        Json?
+  score         Int           @default(0)
+  criteriaHit   Int           @default(0)
+  criteriaTotal Int           @default(0)
+  elapsedSeconds Int          @default(0)
+  comboBonus    Int           @default(0)
+  correct       Boolean?
+  feedback      Json?
+  @@unique([playerId, challengeId])
+}

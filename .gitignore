@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+coverage
+npm-install.log
+npm-install.err.log
+backend-dev.log
+backend-dev.err.log

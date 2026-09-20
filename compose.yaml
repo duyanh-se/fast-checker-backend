@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fact_checker
+      POSTGRES_PASSWORD: fact_checker
+      POSTGRES_DB: fact_checker
+    ports:
+      - "55433:5432"
+    volumes:
+      - fact-checker-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fact_checker -d fact_checker"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://fact_checker:fact_checker@postgres:5432/fact_checker?schema=public
+      PORT: 3000
+      FRONTEND_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  fact-checker-postgres:
