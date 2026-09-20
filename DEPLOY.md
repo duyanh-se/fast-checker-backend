@@ -18,6 +18,14 @@ Sao chép `.env.production.example` thành `/opt/fact-checker-backend/.env`. `PO
 
 Lần triển khai đầu tiên cần cấp chứng chỉ cho `180.93.37.237.nip.io` bằng Certbot. Các lần deploy sau workflow chỉ cập nhật Docker và cấu hình Nginx.
 
+Sau khi container API chạy lần đầu, nạp 20 nhiệm vụ mặc định bằng:
+
+```bash
+docker compose exec -T api npm run prisma:seed:production
+```
+
+Lệnh này cập nhật các nhiệm vụ seed theo thứ tự; không chạy trong mỗi lần deploy để tránh ghi đè các câu hỏi giáo viên đã chỉnh sửa.
+
 ## Vercel
 
 Import repository `duyanh-se/fast-checker-frontend` và đặt các biến môi trường Production:
