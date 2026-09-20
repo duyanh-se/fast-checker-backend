@@ -1,12 +1,11 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: fact_checker
-      POSTGRES_PASSWORD: fact_checker
-      POSTGRES_DB: fact_checker
-    ports:
-      - "55433:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - fact-checker-postgres:/var/lib/postgresql/data
     healthcheck:
@@ -16,14 +15,31 @@ services:
       retries: 12
   api:
     build: .
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://fact_checker:fact_checker@postgres:5432/fact_checker?schema=public
+      DATABASE_URL: ${DATABASE_URL}
       PORT: 3000
-      FRONTEND_URL: http://localhost:3001
+      FRONTEND_URL: ${FRONTEND_URL}
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - fact-checker-caddy-data:/data
+      - fact-checker-caddy-config:/config
+    depends_on:
+      - api
 volumes:
   fact-checker-postgres:
+  fact-checker-caddy-data:
+  fact-checker-caddy-config:

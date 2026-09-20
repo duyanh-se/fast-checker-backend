@@ -1,0 +1,27 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -eu
+            if [ ! -d /opt/fact-checker-backend/.git ]; then
+              git clone https://github.com/duyanh-se/fast-checker-backend.git /opt/fact-checker-backend
+            fi
+            cd /opt/fact-checker-backend
+            git fetch origin main
+            git reset --hard origin/main
+            test -f .env
+            docker compose up -d --build --remove-orphans
